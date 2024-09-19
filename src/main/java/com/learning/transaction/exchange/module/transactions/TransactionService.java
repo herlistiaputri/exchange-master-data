@@ -26,7 +26,9 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -40,6 +42,7 @@ public class TransactionService {
     private final CurrencyRepository currencyRepository;
     private final JournalService journalService;
     private final EntityManager entityManager;
+    private final TransactionReceiptUtil receiptUtil;
 
     public void create(TransactionRequest request){
         Rate rate = rateRepository.findById(request.getRateId()).orElseThrow(() -> new BaseException(HttpStatus.NOT_FOUND.value(), null, HttpStatus.NOT_FOUND.getReasonPhrase()));
@@ -53,10 +56,13 @@ public class TransactionService {
         transaction.setRate(rate);
         transaction.setAmount(request.getAmount());
         transaction.setTotalIdr(request.getTotalIdr());
+        transaction.setCustomerName(request.getCustomerName());
+        transaction.setCustomerEmail(request.getCustomerEmail());
         repository.save(transaction);
 
         setJournal(transaction);
         setJournalIdr(transaction);
+
     }
 
     private String getTransactionCode(TransactionTypeEnum type){
@@ -156,7 +162,7 @@ public class TransactionService {
         }
 
         // Apply sorting
-        if (sortBy == null && sortBy.isEmpty()) {
+        if (sortBy == null || sortBy.isEmpty()) {
            sortBy = "createdAt";
         }
 
@@ -181,5 +187,36 @@ public class TransactionService {
         Long count = entityManager.createQuery(countQuery).getSingleResult();
 
         return new PageImpl<>(resultList, pageable, count);
+    }
+
+    public byte[] generateReceipt(String id) {
+        Transaction transaction = getById(id);
+        return createReceipt(transaction);
+    }
+
+    private byte[] createReceipt(Transaction transaction){
+        LocalDate currentDate = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String formattedDate = currentDate.format(formatter);
+
+        Map<String, Object> receiptData = new HashMap<>();
+        receiptData.put("companyName","Company Name");
+        receiptData.put("companyAddress","Company Address");
+        receiptData.put("companyPhoneNumber","Company Phone Number");
+        receiptData.put("companyEmail","Company Email");
+
+        receiptData.put("customerName",transaction.getCustomerName());
+        receiptData.put("customerEmail",transaction.getCustomerEmail());
+        receiptData.put("transactionDate",formattedDate);
+
+        receiptData.put("currency",transaction.getCurrency().getCurrencyCode());
+        receiptData.put("type",transaction.getTransactionType());
+        receiptData.put("exchangeRate",transaction.getTransactionType().equalsIgnoreCase("buy") ? transaction.getRate().getBuyRate() : transaction.getRate().getSellRate());
+        receiptData.put("amount",transaction.getAmount());
+        receiptData.put("totalAmount",transaction.getTotalIdr());
+        receiptData.put("total",transaction.getTotalIdr());
+
+        return receiptUtil.generatePdf(receiptData);
+
     }
 }

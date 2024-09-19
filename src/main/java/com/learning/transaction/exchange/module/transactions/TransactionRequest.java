@@ -10,5 +10,7 @@ public class TransactionRequest {
     private String rateId;
     private BigDecimal amount;
     private BigDecimal totalIdr;
+    private String customerName;
+    private String customerEmail;
 
 }

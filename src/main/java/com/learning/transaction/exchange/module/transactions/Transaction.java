@@ -20,6 +20,8 @@ public class Transaction extends BaseModel {
             strategy = "org.hibernate.id.UUIDGenerator")
     private String id;
     private String trxCode;
+    private String customerName;
+    private String customerEmail;
     @ManyToOne
     private Currency currency;
     private String transactionType;
