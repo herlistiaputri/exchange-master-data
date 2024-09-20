@@ -191,32 +191,12 @@ public class TransactionService {
 
     public byte[] generateReceipt(String id) {
         Transaction transaction = getById(id);
-        return createReceipt(transaction);
+        return receiptUtil.createReceipt(transaction);
     }
 
-    private byte[] createReceipt(Transaction transaction){
-        LocalDate currentDate = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        String formattedDate = currentDate.format(formatter);
-
-        Map<String, Object> receiptData = new HashMap<>();
-        receiptData.put("companyName","Company Name");
-        receiptData.put("companyAddress","Company Address");
-        receiptData.put("companyPhoneNumber","Company Phone Number");
-        receiptData.put("companyEmail","Company Email");
-
-        receiptData.put("customerName",transaction.getCustomerName());
-        receiptData.put("customerEmail",transaction.getCustomerEmail());
-        receiptData.put("transactionDate",formattedDate);
-
-        receiptData.put("currency",transaction.getCurrency().getCurrencyCode());
-        receiptData.put("type",transaction.getTransactionType());
-        receiptData.put("exchangeRate",transaction.getTransactionType().equalsIgnoreCase("buy") ? transaction.getRate().getBuyRate() : transaction.getRate().getSellRate());
-        receiptData.put("amount",transaction.getAmount());
-        receiptData.put("totalAmount",transaction.getTotalIdr());
-        receiptData.put("total",transaction.getTotalIdr());
-
-        return receiptUtil.generatePdf(receiptData);
-
+    public void sendReceipt(String id) {
+        Transaction transaction = getById(id);
+        receiptUtil.sendReceiptToEmail(transaction);
     }
+
 }

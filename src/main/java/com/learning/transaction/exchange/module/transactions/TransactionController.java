@@ -3,6 +3,7 @@ package com.learning.transaction.exchange.module.transactions;
 import com.learning.transaction.masterdata.module.base.BaseResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -55,5 +56,12 @@ public class TransactionController  {
         } catch (Exception e) {
             throw new RuntimeException("Error writing PDF to output stream", e);
         }
+    }
+
+    @GetMapping("/send-receipt/{id}")
+    @ResponseBody
+    public ResponseEntity<Object> sendReceipt(@PathVariable String id) {
+        service.sendReceipt(id);
+        return ResponseEntity.ok(new BaseResponse<>("Success", 200, null));
     }
 }
